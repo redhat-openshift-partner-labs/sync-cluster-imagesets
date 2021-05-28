@@ -4,13 +4,16 @@ metadata:
   name: sync-openshift-versions
   namespace: hive
 spec:
-  schedule: 0 */6 * * *
+  schedule: '0 */6 * * *'
   concurrencyPolicy: Forbid
   suspend: false
   jobTemplate:
     spec:
       template:
         spec:
+          serviceAccount: rhecoeng
+          serviceAccountName: rhecoeng
+          restartPolicy: Never
           volumes:
             - name: sync-cluster-imagesets
               secret:
@@ -26,13 +29,19 @@ spec:
                 - name: GOOGLE_CREDENTIALS
                   value: /etc/sync-cluster-imagesets/creds
                 - name: GOOGLE_SHEET_ID
-                  value: /etc/sync-cluster-imagesets/sheet
+                  valueFrom:
+                    secretKeyRef:
+                      name: sync-cluster-imagesets
+                      key: sheet
                 - name: GOOGLE_SERVICE_ACCOUNT
                   value: /etc/sync-cluster-imagesets/sa
                 - name: GOOGLE_TOKEN
                   value: /etc/sync-cluster-imagesets/token
                 - name: IMAGE_SOURCE
-                  value: /etc/sync-cluster-imagesets/imagesource
+                  valueFrom:
+                    secretKeyRef:
+                      name: sync-cluster-imagesets
+                      key: imagesource
                 - name: OPENSHIFT_KUBECONFIG
                   value: /etc/.kube/config
               imagePullPolicy: IfNotPresent
