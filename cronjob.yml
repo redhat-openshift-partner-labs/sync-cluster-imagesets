@@ -1,0 +1,46 @@
+kind: CronJob
+apiVersion: batch/v1beta1
+metadata:
+  name: sync-openshift-versions
+  namespace: hive
+spec:
+  schedule: 0 */6 * * *
+  concurrencyPolicy: Forbid
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+            - name: sync-cluster-imagesets
+              secret:
+                secretName: sync-cluster-imagesets
+            - name: kubeconfig
+              secret:
+                secretName: kubeconfig
+          containers:
+            - name: sync-cluster-imagesets
+              command:
+                - sync-cluster-imagesets
+              env:
+                - name: GOOGLE_CREDENTIALS
+                  value: /etc/sync-cluster-imagesets/creds
+                - name: GOOGLE_SHEET_ID
+                  value: /etc/sync-cluster-imagesets/sheet
+                - name: GOOGLE_SERVICE_ACCOUNT
+                  value: /etc/sync-cluster-imagesets/sa
+                - name: GOOGLE_TOKEN
+                  value: /etc/sync-cluster-imagesets/token
+                - name: IMAGE_SOURCE
+                  value: /etc/sync-cluster-imagesets/imagesource
+                - name: OPENSHIFT_KUBECONFIG
+                  value: /etc/.kube/config
+              imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: sync-cluster-imagesets
+                  readOnly: true
+                  mountPath: /etc/sync-cluster-imagesets
+                - name: kubeconfig
+                  readOnly: true
+                  mountPath: /etc/.kube
+              image: quay.io/opdev/sync-cluster-imagesets@sha256:5130cf0e9d2c13cb4df83f3773cab6c1c59aa82251361552a6a5da13fcc16cc1
